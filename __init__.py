@@ -321,8 +321,25 @@ class NewBeveledCurve(bpy.types.Operator):
     bl_description = "Create new beveled curve"
     bl_options = {'REGISTER', 'UNDO'}
 
+    shape = EnumProperty(
+            name = "Shape",
+            description="Use predefined shape of bevel", 
+            items=(
+                ('SQUARE', "Square", ""),
+                ('HALFCIRCLE', "Half-Circle", ""),
+                ('CIRCLE', "Circle", ""),
+                ('TRIANGLE', "Triangle", ""),
+                ), 
+            default='TRIANGLE',
+            )
+
+    subsurf = BoolProperty(
+            name="Use SubSurf Modifier",
+            default=False,
+            )
+
     radius = FloatProperty(
-            name="Size",
+            name="Size (Curve)",
             description="Size of the curve",
             min=0.1, max=10.0,
             default=1.0,
@@ -331,7 +348,7 @@ class NewBeveledCurve(bpy.types.Operator):
             )
 
     scale_x = FloatProperty(
-            name="Scale Horizontal",
+            name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
             default=1.0,
@@ -340,7 +357,7 @@ class NewBeveledCurve(bpy.types.Operator):
             )
 
     scale_y = FloatProperty(
-            name="Scale Vertical",
+            name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
             default=1.0,
@@ -356,17 +373,6 @@ class NewBeveledCurve(bpy.types.Operator):
             default=0.0,
             )
 
-    shape = EnumProperty(
-            name = "Shape",
-            description="Use predefined shape of bevel", 
-            items=(
-                ('SQUARE', "Square", ""),
-                ('HALFCIRCLE', "Half-Circle", ""),
-                ('TRIANGLE', "Triangle", ""),
-                ), 
-            default='TRIANGLE',
-            )
-
     falloff = EnumProperty(
             name = "Radius Falloff",
             description="Falloff of beveled curve", 
@@ -376,11 +382,6 @@ class NewBeveledCurve(bpy.types.Operator):
                 ('NOTIP', "No Tip", ""),
                 ), 
             default='ONETIP',
-            )
-
-    subsurf = BoolProperty(
-            name="Use SubSurf Modifier",
-            default=False,
             )
 
     @classmethod
@@ -582,8 +583,25 @@ class AddBevelToCurve(bpy.types.Operator):
     bl_description = "Add or override bevel to curve object"
     bl_options = {'REGISTER', 'UNDO'}
 
+    shape = EnumProperty(
+            name = "Shape",
+            description="Use predefined shape of bevel", 
+            items=(
+                ('SQUARE', "Square", ""),
+                ('HALFCIRCLE', "Half-Circle", ""),
+                ('CIRCLE', "Circle", ""),
+                ('TRIANGLE', "Triangle", ""),
+                ), 
+            default='TRIANGLE',
+            )
+
+    subsurf = BoolProperty(
+            name="Use SubSurf Modifier",
+            default=False,
+            )
+
     scale_x = FloatProperty(
-            name="Scale Horizontal",
+            name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
             default=1.0,
@@ -592,7 +610,7 @@ class AddBevelToCurve(bpy.types.Operator):
             )
 
     scale_y = FloatProperty(
-            name="Scale Vertical",
+            name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
             default=1.0,
@@ -606,17 +624,6 @@ class AddBevelToCurve(bpy.types.Operator):
             unit='ROTATION',
             min=0.0, max=math.pi*2.0,
             default=0.0,
-            )
-
-    shape = EnumProperty(
-            name = "Shape",
-            description="Use predefined shape of bevel", 
-            items=(
-                ('SQUARE', "Square", ""),
-                ('HALFCIRCLE', "Half-Circle", ""),
-                ('TRIANGLE', "Triangle", ""),
-                ), 
-            default='TRIANGLE',
             )
 
     falloff = EnumProperty(
@@ -646,11 +653,6 @@ class AddBevelToCurve(bpy.types.Operator):
     #        default=12,
     #        step=1,
     #        )
-
-    subsurf = BoolProperty(
-            name="Use SubSurf Modifier",
-            default=False,
-            )
 
     @classmethod
     def poll(cls, context):
@@ -746,6 +748,11 @@ class AddBevelToCurve(bpy.types.Operator):
                 (-0.045, 0.07), (0.0, 0.1), (0.045, 0.07),
                 (0.06, 0.01), (0.06, 0.0)]
 
+        circle_coords = [
+                (-0.036, 0.014), (-0.05, 0.05),
+                (-0.036, 0.086), (0.0, 0.1), (0.036, 0.086),
+                (0.05, 0.05), (0.036, 0.014)]
+
         square_coords = [
                 (0.0, 0.04), (0.01, 0.05), 
                 (0.09, 0.05), (0.1, 0.04), 
@@ -757,6 +764,8 @@ class AddBevelToCurve(bpy.types.Operator):
             coords = triangle_coords
         elif self.shape == 'HALFCIRCLE':
             coords = halfcircle_coords
+        elif self.shape == 'CIRCLE':
+            coords = circle_coords
         elif self.shape == 'SQUARE':
             coords = square_coords
 

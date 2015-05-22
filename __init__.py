@@ -3,7 +3,7 @@ bl_info = {
     "author": "Yusuf Umar",
     "version": (0, 1, 0),
     "blender": (2, 74, 0),
-    "location": "View 3D > Tool Shelf > Misc",
+    "location": "View 3D > Tool Shelf > Curve",
     "description": "Tool to help add and maintain beveled curve easier",
     "wiki_url": "https://github.com/ucupumar/bevel-curve-tools",
     "category": "Add Curve",

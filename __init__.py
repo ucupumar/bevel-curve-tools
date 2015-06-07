@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bevel Curve Tools",
     "author": "Yusuf Umar",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (2, 74, 0),
     "location": "View 3D > Tool Shelf > Curve",
     "description": "Tool to help add and maintain beveled curve easier",
@@ -471,6 +471,9 @@ class ConvertCurveToUnionMesh(bpy.types.Operator):
         return context.mode == 'OBJECT' and obj and obj.type == 'CURVE' and obj.data.bevel_object
 
     def execute(self, context):
+        if 'boolean' not in dir(bpy.ops):
+            self.report({'ERROR'}, "You need to install Sculpt Tools addon to use this feature.")
+            return {'CANCELLED'}  
         convert_curve_to_mesh(context, 'UNION')
         return {'FINISHED'}
 

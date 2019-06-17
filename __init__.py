@@ -279,7 +279,7 @@ class BevelCurveToolPanel(bpy.types.Panel):
             c.operator("curve.convert_beveled_curve_to_merged_mesh")
             c.operator("curve.convert_beveled_curve_to_union_mesh")
             #c.operator("curve.convert_to_mesh_with_options")
-            if obj.type == 'CURVE':
+            if obj and obj.type == 'CURVE':
                 c.label(text="Properties:")
                 c.prop(obj.data, "resolution_u")
         elif context.mode =='EDIT_CURVE':
@@ -853,10 +853,28 @@ class AddBevelToCurve(bpy.types.Operator):
         return {'FINISHED'}
 
 def register():
-	bpy.utils.register_module(__name__)
+    bpy.utils.register_class(BevelCurveToolPanel)
+    bpy.utils.register_class(FinishEditBevel)
+    bpy.utils.register_class(NewBeveledCurve)
+    bpy.utils.register_class(ConvertCurveToSeparatedMesh)
+    bpy.utils.register_class(ConvertCurveToMergedMesh)
+    bpy.utils.register_class(ConvertCurveToUnionMesh)
+    bpy.utils.register_class(ConvertCurveToMesh)
+    bpy.utils.register_class(HideBevelObjects)
+    bpy.utils.register_class(EditBevelCurve)
+    bpy.utils.register_class(AddBevelToCurve)
 
 def unregister():
-	bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(BevelCurveToolPanel)
+    bpy.utils.unregister_class(FinishEditBevel)
+    bpy.utils.unregister_class(NewBeveledCurve)
+    bpy.utils.unregister_class(ConvertCurveToSeparatedMesh)
+    bpy.utils.unregister_class(ConvertCurveToMergedMesh)
+    bpy.utils.unregister_class(ConvertCurveToUnionMesh)
+    bpy.utils.unregister_class(ConvertCurveToMesh)
+    bpy.utils.unregister_class(HideBevelObjects)
+    bpy.utils.unregister_class(EditBevelCurve)
+    bpy.utils.unregister_class(AddBevelToCurve)
 
 if __name__ == "__main__":
     register()

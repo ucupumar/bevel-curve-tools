@@ -1,5 +1,5 @@
 # Bevel Curve Tools
-Blender addons that helps you with creating and maintaining beveled curve. Warning! Some features need you to install [Sculpt Tools addon](https://github.com/MadMinstrel/blender-sculpt-tools).
+Blender addons that helps you with creating and maintaining beveled curve.
 
 #### Compatibility
 This addon works on both Blender 2.79 and Blender 2.80. It will gives you warning if you try to enable it on Blender 2.79, but it will works just fine.

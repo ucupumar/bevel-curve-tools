@@ -350,7 +350,7 @@ def get_proper_index_bevel_placement(curve_obj):
                     if point.radius > old_radius or old_radius > 1.0:
                         idx = (i, j)
     
-    print(idx)
+    #print(idx)
     return idx
 
 def main_draw(self, context):
@@ -843,8 +843,6 @@ class YAddBevelToCurve(bpy.types.Operator):
             bevel_used = check_bevel_used_by_other_objects(curve_obj)
             
             if not bevel_used:
-                print('Oooooeeee')
-
                 if is_28():
                     context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = False
 

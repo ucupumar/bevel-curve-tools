@@ -67,14 +67,14 @@ def radius_falloff(points, power = 1.0, tip = 'ONE'):
     for i, point in enumerate(points):
         dist = i/(total_points-1)
         if tip == 'ONE':
-            radius_weight = 1.0 - pow(dist, power)
+            radius_weight = max(1.0 - pow(dist, power), 0.01)
         elif tip == 'DUAL':
             if dist >= 0.5:
                 dist = (dist - 0.5) * 2.0
-                radius_weight = 1.0 - pow(dist, power)
+                radius_weight = max(1.0 - pow(dist, power), 0.01)
             else:
                 dist = dist * 2.0
-                radius_weight = pow(dist, 1/power)
+                radius_weight = max(pow(dist, 1/power), 0.01)
         elif tip == 'NO':
             radius_weight = 1.0
         #print(dist, radius_weight)
@@ -82,7 +82,7 @@ def radius_falloff(points, power = 1.0, tip = 'ONE'):
 
 def get_spline_points(spline):
     # Points for griffindor
-    if spline.type == 'POLY':
+    if spline.type in {'POLY', 'NURBS'}:
         points = spline.points
     else:
         points = spline.bezier_points
@@ -144,8 +144,12 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
 
                 # Do reversed loop to separate
                 for i in reversed(range(1, spline_len)):
-                    for bp in splines[i].bezier_points:
-                        bp.select_control_point = True
+                    if splines[i].type == 'NURBS':
+                        for p in splines[i].points:
+                            p.select = True
+                    else:
+                        for bp in splines[i].bezier_points:
+                            bp.select_control_point = True
                     bpy.ops.curve.separate()
 
                 bpy.ops.object.editmode_toggle()
@@ -318,7 +322,12 @@ def get_proper_index_bevel_placement(curve_obj):
         points = get_spline_points(spline)
         # Prioritising radius of 1.0
         for j, point in enumerate(points):
-            if point.radius == 1.0:
+            if spline.type == 'NURBS':
+                if j > 0:
+                    idx = (i, j)
+                    found = True
+                    break
+            elif point.radius == 1.0:
                 idx = (i, j)
                 found = True
                 break
@@ -330,14 +339,18 @@ def get_proper_index_bevel_placement(curve_obj):
         for i, spline in enumerate(curve_obj.data.splines):
             points = get_spline_points(spline)
             for j, point in enumerate(points):
-                if point.radius <= 1.0 and point.radius >= 0.3:
+                if spline.type == 'NURBS':
+                    if j > 0:
+                        idx = (i, j)
+                        break
+                elif point.radius <= 1.0 and point.radius >= 0.3:
                     temp_ps = get_spline_points(curve_obj.data.splines[idx[0]])
                     old_radius = temp_ps[idx[1]].radius
                     # get the biggest radius under 1.0
                     if point.radius > old_radius or old_radius > 1.0:
                         idx = (i, j)
     
-    #print(idx)
+    print(idx)
     return idx
 
 def main_draw(self, context):
@@ -429,6 +442,16 @@ class YNewBeveledCurve(bpy.types.Operator):
     bl_description = "Create new beveled curve"
     bl_options = {'REGISTER', 'UNDO'}
 
+    curve_type = EnumProperty(
+            name = 'Type',
+            description="Curve Type", 
+            items = (
+                ('BEZIER', "Bezier", ""),
+                ('NURBS', "NURBS", ""),
+                ),
+            default='BEZIER',
+            )
+
     shape = EnumProperty(
             name = "Shape",
             description="Use predefined shape of bevel", 
@@ -497,7 +520,11 @@ class YNewBeveledCurve(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        bpy.ops.curve.primitive_bezier_curve_add(radius = self.radius)
+
+        if self.curve_type == 'BEZIER':
+            bpy.ops.curve.primitive_bezier_curve_add(radius = self.radius)
+        else: bpy.ops.curve.primitive_nurbs_curve_add(radius = self.radius)
+
         bpy.ops.curve.y_add_bevel_to_curve(
             scale_x = self.scale_x,
             scale_y = self.scale_y,
@@ -799,15 +826,15 @@ class YAddBevelToCurve(bpy.types.Operator):
             for p in ps:
                 p.tilt = self.rotation
 
-            if self.falloff == 'ONETIP':
+            #if spline.type == 'NURBS' or self.falloff == 'NOTIP':
+            if self.falloff == 'NOTIP':
+                radius_falloff(ps, tip='NO')
+
+            elif self.falloff == 'ONETIP':
                 radius_falloff(ps, tip='ONE')
 
             elif self.falloff == 'DUALTIP':
                 radius_falloff(ps, tip='DUAL')
-
-            elif self.falloff == 'NOTIP':
-                radius_falloff(ps, tip='NO')
-
 
         # Delete old bevel object if it's already there
         if curve.bevel_object:

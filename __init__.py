@@ -374,7 +374,7 @@ class YBevelCurveToolPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     #bl_context = "objectmode"
     bl_label = "Bevel Curve Tools"
-    #bl_category = "Curve"
+    bl_category = "Curve"
     
     def draw(self, context):
         main_draw(self, context)

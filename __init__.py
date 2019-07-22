@@ -182,7 +182,8 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
 
     # Unhide collection
     if is_28():
-        context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = False
+        col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+        if col: col.exclude = False
 
     for o in bev_objs_to_del:
         # bring to active layer
@@ -218,7 +219,8 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
 
     # Hide back collection
     if is_28():
-        context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
+        col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+        if col: col.exclude = True
 
 def check_bevel_used_by_other_objects(curve_obj):
 
@@ -363,7 +365,9 @@ def main_draw(self, context):
         c = col.column(align=True)
         c.operator("curve.y_add_bevel_to_curve", icon='MESH_DATA')
         c.operator("curve.y_edit_bevel_curve", icon='EDITMODE_HLT')
-        c.operator("curve.y_hide_bevel_objects", icon='VISIBLE_IPO_OFF')
+        if is_28():
+            c.operator("curve.y_hide_bevel_objects", icon='HIDE_ON')
+        else: c.operator("curve.y_hide_bevel_objects", icon='VISIBLE_IPO_OFF')
 
         #if obj and obj.type =='CURVE':
         col.label(text="Convert:")
@@ -421,7 +425,8 @@ class YFinishEditBevel(bpy.types.Operator):
 
         if is_28():
             # Hide collection
-            context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
+            col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+            if col: col.exclude = True
         else:
             # Bring back bevel object to layer 19
             bevel_obj.layers[19] = True
@@ -614,7 +619,8 @@ class YHideBevelObjects(bpy.types.Operator):
 
         if is_28():
             # Hide collection
-            context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
+            col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+            if col: col.exclude = True
 
         for obj in get_scene_objects():
             if obj.type == 'CURVE' and obj.data.bevel_object and obj.data.bevel_object not in bevel_objs:
@@ -679,8 +685,9 @@ class YEditBevelCurve(bpy.types.Operator):
         bevel_obj.location = bevel_position
 
         if is_28():
-            # Hide collection
-            context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = False
+            # Unhide collection
+            col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+            if col: col.exclude = False
         else:
             # Show bevel object on active layer
             for i in range(20):
@@ -844,7 +851,8 @@ class YAddBevelToCurve(bpy.types.Operator):
             
             if not bevel_used:
                 if is_28():
-                    context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = False
+                    col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+                    if col: col.exclude = False
 
                 # Delete old bevel object
                 bevel_obj = curve.bevel_object
@@ -855,7 +863,8 @@ class YAddBevelToCurve(bpy.types.Operator):
                 bpy.ops.object.delete()
 
                 if is_28():
-                    context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
+                    col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+                    if col: col.exclude = True
 
                 # Reselect curve_obj
                 set_object_select(curve_obj, True)

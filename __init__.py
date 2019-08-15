@@ -1,12 +1,12 @@
 bl_info = {
-    "name": "Bevel Curve Tools",
+    "name": "Bevel Curve Tools Custom",
     "author": "Yusuf Umar",
-    "version": (0, 1, 1),
+    "version": (0, 1, 2),
     "blender": (2, 80, 0),
     "location": "View 3D > Tool Shelf > Curve",
     "description": "Tool to help add and maintain beveled curve easier",
     "wiki_url": "https://github.com/ucupumar/bevel-curve-tools",
-    "category": "Add Curve",
+    "category": "Add Curve Custom",
 }
 
 import bpy, math
@@ -76,6 +76,8 @@ def radius_falloff(points, power = 1.0, tip = 'ONE'):
                 dist = dist * 2.0
                 radius_weight = max(pow(dist, 1/power), 0.01)
         elif tip == 'NO':
+            radius_weight = 1.0
+        elif tip == 'CUSTOM':
             radius_weight = 1.0
         #print(dist, radius_weight)
         point.radius = radius_weight
@@ -234,6 +236,19 @@ def check_bevel_used_by_other_objects(curve_obj):
 
     return bevel_used
 
+#new
+def check_taper_used_by_other_objects(curve_obj):
+
+    taper_used = False
+
+    for o in get_scene_objects():
+        if (o.type == 'CURVE' and
+            o != curve_obj and
+            o.data.taper_object == curve_obj.data.taper_object):
+            taper_used = True
+
+    return taper_used
+
 def get_point_rotation(context, scene, curve_obj, index=0, spline_index=0):
 
     # Get curve attributes
@@ -355,6 +370,48 @@ def get_proper_index_bevel_placement(curve_obj):
     #print(idx)
     return idx
 
+#new
+def get_proper_index_taper_placement(curve_obj):
+    """ Returns (spline index, point index) """
+    idx = (0, 0)
+    found = False
+
+    for i, spline in enumerate(curve_obj.data.splines):
+        points = get_spline_points(spline)
+        # Prioritising radius of 1.0
+        for j, point in enumerate(points):
+            if spline.type == 'NURBS':
+                if j > 0:
+                    idx = (i, j)
+                    found = True
+                    break
+            elif point.radius == 1.0:
+                idx = (i, j)
+                found = True
+                break
+        if found:
+            break
+
+    # If still not found do another loop
+    if not found:
+        for i, spline in enumerate(curve_obj.data.splines):
+            points = get_spline_points(spline)
+            for j, point in enumerate(points):
+                if spline.type == 'NURBS':
+                    if j > 0:
+                        idx = (i, j)
+                        break
+                elif point.radius <= 1.0 and point.radius >= 0.3:
+                    temp_ps = get_spline_points(curve_obj.data.splines[idx[0]])
+                    old_radius = temp_ps[idx[1]].radius
+                    # get the biggest radius under 1.0
+                    if point.radius > old_radius or old_radius > 1.0:
+                        idx = (i, j)
+    
+    #print(idx)
+    return idx
+
+
 def main_draw(self, context):
     obj = context.active_object
     col = self.layout.column()
@@ -364,10 +421,16 @@ def main_draw(self, context):
         col.label(text="Edit:")
         c = col.column(align=True)
         c.operator("curve.y_add_bevel_to_curve", icon='MESH_DATA')
+        c.operator("curve.y_add_taper_to_curve", icon='MESH_DATA')
         c.operator("curve.y_edit_bevel_curve", icon='EDITMODE_HLT')
+        c.operator("curve.y_edit_taper_curve", icon='EDITMODE_HLT')
         if is_28():
             c.operator("curve.y_hide_bevel_objects", icon='HIDE_ON')
-        else: c.operator("curve.y_hide_bevel_objects", icon='VISIBLE_IPO_OFF')
+            c.operator("curve.y_hide_taper_objects", icon='HIDE_ON')            
+        else: 
+            c.operator("curve.y_hide_bevel_objects", icon='VISIBLE_IPO_OFF')
+            c.operator("curve.y_hide_taper_objects", icon='VISIBLE_IPO_OFF')
+        c.operator("curve.select_orphans", icon='OBJECT_DATA')
 
         #if obj and obj.type =='CURVE':
         col.label(text="Convert:")
@@ -383,8 +446,19 @@ def main_draw(self, context):
 
     elif context.mode =='EDIT_CURVE':
         col.alert = True
-        col.operator("curve.y_finish_edit_bevel")
+        col.operator("curve.y_finish_edit")
         col.alert = False
+
+
+#def select_orphans():
+#    bpy.ops.object.select_all(action='DESELECT')
+#    all_objects = bpy.context.scene.objects
+#    for o in all_objects:
+#        if o.type == 'CURVE' and ('_bevel' in o.name or '_taper' in o.name):
+#                if o == False
+#                    set_object_select(o, True)
+
+
 
 class YBevelCurveToolPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
@@ -406,9 +480,9 @@ class YBevelCurveToolUIPanel(bpy.types.Panel):
         main_draw(self, context)
 
 class YFinishEditBevel(bpy.types.Operator):
-    bl_idname = "curve.y_finish_edit_bevel"
-    bl_label = "Finish Edit Bevel"
-    bl_description = "Finish edit bevel and back to object mode"
+    bl_idname = "curve.y_finish_edit"
+    bl_label = "Finish Editing"
+    bl_description = "Finish editing and go back to object mode"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -440,6 +514,9 @@ class YFinishEditBevel(bpy.types.Operator):
                 set_active_object(obj)
 
         return {'FINISHED'}
+
+#new
+
 
 class YNewBeveledCurve(bpy.types.Operator):
     bl_idname = "curve.y_new_beveled_curve"
@@ -641,6 +718,45 @@ class YHideBevelObjects(bpy.types.Operator):
         
         return {'FINISHED'}
 
+class YHideTaperObjects(bpy.types.Operator):
+    bl_idname = "curve.y_hide_taper_objects"
+    bl_label = "Hide Taper Objects"
+    bl_description = "Hide all taper objects in the scene"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT'
+
+    def execute(self, context):
+
+        taper_objs = list()
+
+        if is_28():
+            # Hide collection
+            col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+            if col: col.exclude = True
+
+        for obj in get_scene_objects():
+            if obj.type == 'CURVE' and obj.data.taper_object and obj.data.taper_object not in taper_objs:
+                taper_objs.append(obj.data.taper_object)
+            if '_taper' in obj.name and  obj not in taper_objs:
+                taper_objs.append(obj)
+        
+        if not is_28():
+            # Change object's layer to only layer 19
+            for obj in taper_objs:
+                obj.layers[19] = True
+                for i in range(19):
+                    obj.layers[i] = False
+
+        # Hide objects
+        for obj in taper_objs:
+            hide_object(obj, True)
+        
+        return {'FINISHED'}
+
+
 class YEditBevelCurve(bpy.types.Operator):
     bl_idname = "curve.y_edit_bevel_curve"
     bl_label = "Edit Bevel"
@@ -701,6 +817,69 @@ class YEditBevelCurve(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='EDIT')
 
         return {'FINISHED'}
+
+#New Additions
+class YEditTaperCurve(bpy.types.Operator):
+    bl_idname = "curve.y_edit_taper_curve"
+    bl_label = "Edit Taper"
+    bl_description = "Edit taper shape of curve"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        # Check if curve is selected
+        obj = context.active_object
+        return context.mode == 'OBJECT' and obj and obj.type == 'CURVE' and obj.data.taper_object
+
+    def execute(self, context):
+
+        scn = context.scene
+        obj = context.active_object
+        curve = obj.data
+        taper_obj = curve.taper_object
+
+        # Hide all taper objects around first
+        bpy.ops.curve.y_hide_taper_objects()
+
+        # Duplicate taper object if it's used by other object
+        taper_used = check_taper_used_by_other_objects(obj)
+        if taper_used:
+            taper_obj = bpy.data.objects.new(obj.name + '_taper', bevel_obj.data.copy())
+
+            if is_28():
+                col = get_set_collection(HIDDEN_COLLECTION_NAME, scn.collection)
+                col.objects.link(taper_obj)
+            else: link_object(scn, taper_obj)
+
+            curve.taper_object = taper_obj
+
+        idx = get_proper_index_taper_placement(obj)
+        #taper_rotation = get_point_rotation(context, scn, obj, index=idx[1], spline_index=idx[0])
+        taper_position = get_point_position(obj, index=idx[1], spline_index=idx[0])
+
+        # Set object rotation and location
+        #taper_obj.rotation_mode = 'QUATERNION'
+        #taper_obj.rotation_quaternion = taper_rotation
+        taper_obj.location = taper_position
+
+        if is_28():
+            # Unhide collection
+            col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+            if col: col.exclude = False
+        else:
+            # Show taper object on active layer
+            for i in range(20):
+                taper_obj.layers[i] = scn.layers[i]
+
+        # Show object if hidden
+        hide_object(taper_obj, False)
+
+        bpy.ops.object.select_all(action='DESELECT')
+        set_active_object(taper_obj)
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        return {'FINISHED'}
+
 
 class YAddBevelToCurve(bpy.types.Operator):
     bl_idname = "curve.y_add_bevel_to_curve"
@@ -991,6 +1170,225 @@ class YAddBevelToCurve(bpy.types.Operator):
 
         return {'FINISHED'}
 
+#New Additions
+class YAddTaperToCurve(bpy.types.Operator):
+    bl_idname = "curve.y_add_taper_to_curve"
+    bl_label = "Add/Override Taper"
+    bl_description = "Add or override taper to curve object"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    curve_type = EnumProperty(
+            name = 'Type',
+            description="Curve Type", 
+            items = (
+                ('BEZIER', "Bezier", ""),
+                ('NURBS', "NURBS", ""),
+                ),
+            default='BEZIER',
+            )
+
+    dimension = EnumProperty(
+            name = 'Dimensions',
+            description="Dimension Type", 
+            items=[
+                ('3D', '3D', '3D'),
+                ('2D', '2D', '2D')
+              ],
+            default="3D"
+            )
+
+    radius = FloatProperty(
+            name="Size (Curve)",
+            description="Size of the curve",
+            min=0.1, max=10.0,
+            default=1.0,
+            step=0.3,
+            precision=3
+            )
+
+    rotation = FloatProperty(
+            name="Rotate",
+            description="Tilt rotation",
+            unit='ROTATION',
+            min=0.0, max=math.pi*2.0,
+            default=0.0
+            )
+
+    #falloff_power = FloatProperty(
+    #        name="Falloff Power",
+    #        description="Power of the falloff",
+    #        min=1.0, max=10.0,
+    #        default=1.0,
+    #        step=1.0,
+    #        precision=2
+    #        )
+
+    #resolution = IntProperty(
+    #        name="Resolution U",
+    #        description="Resolution between points",
+    #        min=1, max=64,
+    #        default=12,
+    #        step=1,
+    #        )
+
+
+    @classmethod
+    def poll(cls, context):
+        if not context.mode == 'OBJECT':
+            return False
+        # check if curve is selected
+        obj = context.active_object
+        if obj and obj.type == 'CURVE':
+            # Taper object cannot use taper too
+            taper_match = any(o for o in get_scene_objects() if o.type == 'CURVE' and o.data.taper_object == obj)
+            if taper_match:
+                return False
+            else:
+                return True
+        return False
+
+    def execute(self, context):
+
+        curve_obj = context.active_object
+        scn = context.scene
+        curve = curve_obj.data
+
+
+
+        #curve.resolution_u = self.resolution
+        #curve.render_resolution_u = self.resolution
+
+        # Spline setup
+        #for spline in splines:
+            # Cardinal is better
+        #    spline.tilt_interpolation = 'CARDINAL'
+        #    spline.radius_interpolation = 'CARDINAL'
+
+        #    ps = get_spline_points(spline)
+
+            # Set tilt rotation
+        #    for p in ps:
+        #        p.tilt = self.rotation
+
+        # Delete old taper object if it's already there
+        if curve.taper_object:
+            # Check if other object using this taper object
+            taper_used = check_taper_used_by_other_objects(curve_obj)
+            
+            if not taper_used:
+                if is_28():
+                    col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+                    if col: col.exclude = False
+
+                # Delete old taper object
+                taper_obj = curve.taper_object
+                hide_object(taper_obj, False)
+                bpy.ops.object.select_all(action='DESELECT')
+                set_object_select(taper_obj, True)
+                set_active_object(taper_obj)
+                bpy.ops.object.delete()
+
+                if is_28():
+                    col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
+                    if col: col.exclude = True
+
+                # Reselect curve_obj
+                set_object_select(curve_obj, True)
+                set_active_object(curve_obj)
+
+
+
+
+    #   bpy.ops.curve.y_add_bevel_to_curve(
+    #       scale_x = self.scale_x,
+    #       scale_y = self.scale_y,
+    #       rotation = self.rotation)
+
+        # Add new spline and set it's points to taper curve
+    #    new_spline = taper_curve.splines.new('POLY')
+    #    new_spline.use_cyclic_u = True
+
+        # Create new taper object
+
+        if self.curve_type == 'BEZIER':
+            bpy.ops.curve.primitive_bezier_curve_add(radius = self.radius)
+        else:   bpy.ops.curve.primitive_nurbs_curve_add(radius = self.radius)
+
+        taper_curve = bpy.context.object.data
+        taper_obj = bpy.context.object
+
+        taper_obj.name = curve_obj.name + '_taper'
+
+        #taper_curve = bpy.data.curves.new(curve_obj.name + '_taper', 'CURVE')
+        #taper_obj = bpy.data.objects.new(curve_obj.name + '_taper', taper_curve)
+
+        if self.dimension == '3D':
+            taper_curve.dimensions = "3D"
+        else:   taper_curve.dimensions = "2D"
+
+        #if not is_28():
+        #    link_object(scn, taper_obj)
+
+        # Add taper to curve
+        curve.taper_object = taper_obj
+        curve.use_fill_caps = False
+        
+        # Scale the points
+        #for spline in taper_curve.splines:
+        #ps = get_spline_points(taper_curve.splines[0])
+        #sum_x = 0.0
+        #sum_y = 0.0
+        #for p in ps:
+        #    sum_x += p.co.x
+        #    sum_y += p.co.y
+
+        #offset_x = sum_x / len(ps)
+        #offset_y = sum_y / len(ps)
+
+ 
+        # Set object rotation and location
+        #taper_rotation = get_point_rotation(context, scn, curve_obj)
+        #taper_position = get_point_position(curve_obj)
+
+        taper_obj.rotation_mode = 'QUATERNION'
+        taper_obj.rotation_quaternion = (0,0,0,0)
+        #taper_obj.location = taper_position
+
+        # Send taper object to layer 20
+        if is_28():
+            col = get_set_collection(HIDDEN_COLLECTION_NAME, scn.collection)
+            col.objects.link(taper_obj)
+            context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
+        else:
+            taper_obj.layers[19] = True
+            for i in range(19):
+                taper_obj.layers[i] = False
+
+        # Hide taper by default
+        hide_object(taper_obj, True)
+        # Reselect curve_obj
+        set_object_select(curve_obj, True)
+        set_active_object(curve_obj)
+
+        return {'FINISHED'}
+
+#new
+# class Select_Orphans(bpy.types.Operator):
+#     bl_idname = "curve.select_orphans"
+#     bl_label = "Select all orphans"
+#     bl_description = "Select all bezier/tapers without a curve"
+#     bl_options = {'REGISTER', 'UNDO'}
+
+#     @classmethod
+#     def poll(cls, context):
+#         return context.mode == 'OBJECT'
+
+#     def execute(self, context):
+#         select_orphans()
+#         return {'FINISHED'}
+
+
+
 def register():
 
     if is_28():
@@ -1003,8 +1401,12 @@ def register():
     bpy.utils.register_class(YConvertCurveToUnionMesh)
     bpy.utils.register_class(YConvertCurveToMesh)
     bpy.utils.register_class(YHideBevelObjects)
+    bpy.utils.register_class(YHideTaperObjects)#new
     bpy.utils.register_class(YEditBevelCurve)
+    bpy.utils.register_class(YEditTaperCurve) #new 
     bpy.utils.register_class(YAddBevelToCurve)
+    bpy.utils.register_class(YAddTaperToCurve)#new
+#    bpy.utils.register_class(Select_Orphans)#new
 
 def unregister():
     if is_28():
@@ -1017,8 +1419,12 @@ def unregister():
     bpy.utils.unregister_class(YConvertCurveToUnionMesh)
     bpy.utils.unregister_class(YConvertCurveToMesh)
     bpy.utils.unregister_class(YHideBevelObjects)
+    bpy.utils.unregister_class(YHideTaperObjects) #new
     bpy.utils.unregister_class(YEditBevelCurve)
+    bpy.utils.unregister_class(YEditTaperCurve) #new #new
     bpy.utils.unregister_class(YAddBevelToCurve)
+    bpy.utils.unregister_class(YAddTaperToCurve) #new
+#   bpy.utils.unregister_class(Select_Orphans)#new
 
 if __name__ == "__main__":
     register()

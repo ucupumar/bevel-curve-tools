@@ -15,42 +15,48 @@ from bpy.props import FloatProperty, BoolProperty, IntProperty, EnumProperty
 
 HIDDEN_COLLECTION_NAME = '_HIDDEN_BEVEL_OBJECTS'
 
-def is_28():
-    return bpy.app.version_string.startswith('2.8')
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+
+def is_greater_than_280():
+    ver = bpy.app.version_string[:4]
+    if versiontuple(ver) >= versiontuple('2.80'):
+        return True
+    else: return False
 
 def set_active_object(obj):
-    if is_28():
+    if is_greater_than_280():
         bpy.context.view_layer.objects.active = obj
     else: bpy.context.scene.objects.active = obj
 
 def get_object_select(obj):
-    if is_28():
+    if is_greater_than_280():
         try: return obj.select_get()
         except: return False
     else: return obj.select
 
 def set_object_select(obj, val):
-    if is_28():
+    if is_greater_than_280():
         obj.select_set(val)
     else: obj.select = val
 
 def mul(A, B):
-    if is_28():
+    if is_greater_than_280():
         return A @ B
     else: return A * B
 
 def hide_object(obj, val):
-    if is_28():
+    if is_greater_than_280():
         obj.hide_viewport = val
     else: obj.hide = val
 
 def link_object(scene, obj):
-    if is_28():
+    if is_greater_than_280():
         scene.collection.objects.link(obj)
     else: scene.objects.link(obj)
 
 def get_scene_objects():
-    if is_28():
+    if is_greater_than_280():
         return bpy.context.view_layer.objects
     else: return bpy.context.scene.objects
 
@@ -181,13 +187,13 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
     bpy.ops.object.select_all(action='DESELECT')
 
     # Unhide collection
-    if is_28():
+    if is_greater_than_280():
         col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
         if col: col.exclude = False
 
     for o in bev_objs_to_del:
         # bring to active layer
-        if not is_28():
+        if not is_greater_than_280():
             for i in range(20):
                 o.layers[i] = context.scene.layers[i]
         # show and select them
@@ -218,7 +224,7 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
     set_object_select(context.active_object, True)
 
     # Hide back collection
-    if is_28():
+    if is_greater_than_280():
         col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
         if col: col.exclude = True
 
@@ -365,7 +371,7 @@ def main_draw(self, context):
         c = col.column(align=True)
         c.operator("curve.y_add_bevel_to_curve", icon='MESH_DATA')
         c.operator("curve.y_edit_bevel_curve", icon='EDITMODE_HLT')
-        if is_28():
+        if is_greater_than_280():
             c.operator("curve.y_hide_bevel_objects", icon='HIDE_ON')
         else: c.operator("curve.y_hide_bevel_objects", icon='VISIBLE_IPO_OFF')
 
@@ -423,7 +429,7 @@ class YFinishEditBevel(bpy.types.Operator):
         # Hide bevel object
         hide_object(bevel_obj, True)
 
-        if is_28():
+        if is_greater_than_280():
             # Hide collection
             col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
             if col: col.exclude = True
@@ -617,7 +623,7 @@ class YHideBevelObjects(bpy.types.Operator):
 
         bevel_objs = list()
 
-        if is_28():
+        if is_greater_than_280():
             # Hide collection
             col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
             if col: col.exclude = True
@@ -628,7 +634,7 @@ class YHideBevelObjects(bpy.types.Operator):
             if '_bevel' in obj.name and  obj not in bevel_objs:
                 bevel_objs.append(obj)
         
-        if not is_28():
+        if not is_greater_than_280():
             # Change object's layer to only layer 19
             for obj in bevel_objs:
                 obj.layers[19] = True
@@ -668,7 +674,7 @@ class YEditBevelCurve(bpy.types.Operator):
         if bevel_used:
             bevel_obj = bpy.data.objects.new(obj.name + '_bevel', bevel_obj.data.copy())
 
-            if is_28():
+            if is_greater_than_280():
                 col = get_set_collection(HIDDEN_COLLECTION_NAME, scn.collection)
                 col.objects.link(bevel_obj)
             else: link_object(scn, bevel_obj)
@@ -684,7 +690,7 @@ class YEditBevelCurve(bpy.types.Operator):
         bevel_obj.rotation_quaternion = bevel_rotation
         bevel_obj.location = bevel_position
 
-        if is_28():
+        if is_greater_than_280():
             # Unhide collection
             col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
             if col: col.exclude = False
@@ -850,7 +856,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             bevel_used = check_bevel_used_by_other_objects(curve_obj)
             
             if not bevel_used:
-                if is_28():
+                if is_greater_than_280():
                     col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
                     if col: col.exclude = False
 
@@ -862,7 +868,7 @@ class YAddBevelToCurve(bpy.types.Operator):
                 set_active_object(bevel_obj)
                 bpy.ops.object.delete()
 
-                if is_28():
+                if is_greater_than_280():
                     col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
                     if col: col.exclude = True
 
@@ -906,7 +912,7 @@ class YAddBevelToCurve(bpy.types.Operator):
         bevel_curve = bpy.data.curves.new(curve_obj.name + '_bevel', 'CURVE')
         bevel_curve.dimensions = '3D'
         bevel_curve.resolution_u = 2
-        if not is_28():
+        if not is_greater_than_280():
             bevel_curve.show_normal_face = False
 
         # Add new spline and set it's points to bevel curve
@@ -918,7 +924,7 @@ class YAddBevelToCurve(bpy.types.Operator):
 
         # Create new bevel object
         bevel_obj = bpy.data.objects.new(curve_obj.name + '_bevel', bevel_curve)
-        if not is_28():
+        if not is_greater_than_280():
             link_object(scn, bevel_obj)
 
         # Add bevel to curve
@@ -960,7 +966,7 @@ class YAddBevelToCurve(bpy.types.Operator):
         bevel_obj.location = bevel_position
 
         # Send bevel object to layer 20
-        if is_28():
+        if is_greater_than_280():
             col = get_set_collection(HIDDEN_COLLECTION_NAME, scn.collection)
             col.objects.link(bevel_obj)
             context.view_layer.layer_collection.children[HIDDEN_COLLECTION_NAME].exclude = True
@@ -993,7 +999,7 @@ class YAddBevelToCurve(bpy.types.Operator):
 
 def register():
 
-    if is_28():
+    if is_greater_than_280():
         bpy.utils.register_class(YBevelCurveToolUIPanel)
     else: bpy.utils.register_class(YBevelCurveToolPanel)
     bpy.utils.register_class(YFinishEditBevel)
@@ -1007,7 +1013,7 @@ def register():
     bpy.utils.register_class(YAddBevelToCurve)
 
 def unregister():
-    if is_28():
+    if is_greater_than_280():
         bpy.utils.unregister_class(YBevelCurveToolUIPanel)
     else: bpy.utils.unregister_class(YBevelCurveToolPanel)
     bpy.utils.unregister_class(YFinishEditBevel)

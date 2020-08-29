@@ -7,7 +7,7 @@ It will gives you warning if you try to enable it on Blender 2.79, but it will w
 
 #### Location
 Blender 2.79: View 3D > Tool Shelf > Curve  
-Blender 2.80: View 3D > Sidebar > Curve
+Blender 2.80 or greater: View 3D > Sidebar > Curve
 
 #### Installation & Demo video:
 [![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/xfOlvZNgDt0/0.jpg)](http://www.youtube.com/watch?v=xfOlvZNgDt0)

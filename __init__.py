@@ -1,8 +1,8 @@
 bl_info = {
     "name": "Bevel Curve Tools",
-    "author": "Yusuf Umar",
-    "version": (0, 1, 1),
-    "blender": (2, 80, 0),
+    "author": "Yusuf Umar, Bookyakuno(Blender2.90 Update)",
+    "version": (0, 1, 11),
+    "blender": (2, 83, 0),
     "location": "View 3D > Tool Shelf > Curve",
     "description": "Tool to help add and maintain beveled curve easier",
     "wiki_url": "https://github.com/ucupumar/bevel-curve-tools",
@@ -111,7 +111,7 @@ def bool_union(context):
         # Add boolean modifier
         md = obj.modifiers.new('booleanunion', 'BOOLEAN')
         md.operation = 'UNION'
-        md.object = o       
+        md.object = o
 
         # Apply the modifier
         bpy.ops.object.modifier_apply(modifier="booleanunion")
@@ -129,9 +129,9 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
     # Listing selected curve objects
     objs = get_scene_objects()
 
-    selected_objs = [o for o in objs if 
-            get_object_select(o) and 
-            o.type == 'CURVE' and 
+    selected_objs = [o for o in objs if
+            get_object_select(o) and
+            o.type == 'CURVE' and
             o.data.bevel_object]
 
     if mode == 'UNION' or mode == 'SEPARATE':
@@ -161,18 +161,18 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
                 bpy.ops.object.editmode_toggle()
 
         # Do listing selected curve objects again
-        selected_objs = [o for o in objs if 
-                get_object_select(o) and 
-                o.type == 'CURVE' and 
+        selected_objs = [o for o in objs if
+                get_object_select(o) and
+                o.type == 'CURVE' and
                 o.data.bevel_object]
 
     # Listing bevel objects of selected objects
     sel_bev_objs = [o.data.bevel_object for o in selected_objs]
 
     # Listing bevel objects of not selected objects
-    not_sel_bev_objs = [o.data.bevel_object for o in objs if 
-            not get_object_select(o) and 
-            o.type == 'CURVE' and 
+    not_sel_bev_objs = [o.data.bevel_object for o in objs if
+            not get_object_select(o) and
+            o.type == 'CURVE' and
             o.data.bevel_object]
 
     # Listing bevel objecs to delete if not used anywhere
@@ -183,7 +183,7 @@ def convert_curve_to_mesh(context, mode='NOMERGE'):
 
     # convert curve to mesh
     bpy.ops.object.convert(target='MESH')
-    
+
     bpy.ops.object.select_all(action='DESELECT')
 
     # Unhide collection
@@ -304,7 +304,7 @@ def get_point_rotation(context, scene, curve_obj, index=0, spline_index=0):
     # delete temp objects
     set_object_select(temp_bevel_obj, True)
     bpy.ops.object.delete()
-    
+
     # Match bevel x-axis to handle x-axis
     bevel_x = Vector((1.0, 0.0, 0.0))
     target_x = mul(curve_mat.to_3x3(), target_x)
@@ -357,7 +357,7 @@ def get_proper_index_bevel_placement(curve_obj):
                     # get the biggest radius under 1.0
                     if point.radius > old_radius or old_radius > 1.0:
                         idx = (i, j)
-    
+
     #print(idx)
     return idx
 
@@ -392,17 +392,17 @@ def main_draw(self, context):
         col.operator("curve.y_finish_edit_bevel")
         col.alert = False
 
-class YBevelCurveToolPanel(bpy.types.Panel):
+class BEVELCURVETOOL_PT_YBevelCurveToolPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     #bl_context = "objectmode"
     bl_label = "Bevel Curve Tools"
     bl_category = "Curve"
-    
+
     def draw(self, context):
         main_draw(self, context)
 
-class YBevelCurveToolUIPanel(bpy.types.Panel):
+class BEVELCURVETOOL_PT_YBevelCurveToolUIPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_label = 'Bevel Curve Tools'
     bl_region_type = 'UI'
@@ -411,7 +411,7 @@ class YBevelCurveToolUIPanel(bpy.types.Panel):
     def draw(self, context):
         main_draw(self, context)
 
-class YFinishEditBevel(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YFinishEditBevel(bpy.types.Operator):
     bl_idname = "curve.y_finish_edit_bevel"
     bl_label = "Finish Edit Bevel"
     bl_description = "Finish edit bevel and back to object mode"
@@ -423,9 +423,9 @@ class YFinishEditBevel(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.editmode_toggle()
-        
+
         bevel_obj = context.active_object
-        
+
         # Hide bevel object
         hide_object(bevel_obj, True)
 
@@ -447,15 +447,15 @@ class YFinishEditBevel(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class YNewBeveledCurve(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YNewBeveledCurve(bpy.types.Operator):
     bl_idname = "curve.y_new_beveled_curve"
     bl_label = "New Beveled Curve"
     bl_description = "Create new beveled curve"
     bl_options = {'REGISTER', 'UNDO'}
 
-    curve_type = EnumProperty(
+    curve_type : EnumProperty(
             name = 'Type',
-            description="Curve Type", 
+            description="Curve Type",
             items = (
                 ('BEZIER', "Bezier", ""),
                 ('NURBS', "NURBS", ""),
@@ -463,24 +463,24 @@ class YNewBeveledCurve(bpy.types.Operator):
             default='BEZIER',
             )
 
-    shape = EnumProperty(
+    shape : EnumProperty(
             name = "Shape",
-            description="Use predefined shape of bevel", 
+            description="Use predefined shape of bevel",
             items=(
                 ('SQUARE', "Square", ""),
                 ('HALFCIRCLE', "Half-Circle", ""),
                 ('CIRCLE', "Circle", ""),
                 ('TRIANGLE', "Triangle", ""),
-                ), 
+                ),
             default='TRIANGLE',
             )
 
-    subsurf = BoolProperty(
+    subsurf : BoolProperty(
             name="Use SubSurf Modifier",
             default=False,
             )
 
-    radius = FloatProperty(
+    radius : FloatProperty(
             name="Size (Curve)",
             description="Size of the curve",
             min=0.1, max=10.0,
@@ -489,7 +489,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_x = FloatProperty(
+    scale_x : FloatProperty(
             name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
@@ -498,7 +498,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_y = FloatProperty(
+    scale_y : FloatProperty(
             name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
@@ -507,7 +507,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    rotation = FloatProperty(
+    rotation : FloatProperty(
             name="Rotate",
             description="Tilt rotation",
             unit='ROTATION',
@@ -515,14 +515,14 @@ class YNewBeveledCurve(bpy.types.Operator):
             default=0.0,
             )
 
-    falloff = EnumProperty(
+    falloff : EnumProperty(
             name = "Radius Falloff",
-            description="Falloff of beveled curve", 
+            description="Falloff of beveled curve",
             items=(
                 ('DUALTIP', "Dual Tip", ""),
                 ('ONETIP', "One Tip", ""),
                 ('NOTIP', "No Tip", ""),
-                ), 
+                ),
             default='ONETIP',
             )
 
@@ -545,7 +545,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             subsurf = self.subsurf)
         return {'FINISHED'}
 
-class YConvertCurveToSeparatedMesh(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YConvertCurveToSeparatedMesh(bpy.types.Operator):
     bl_idname = "curve.y_convert_beveled_curve_to_separated_meshes"
     bl_label = "To Separated Meshes"
     bl_description = "Convert beveled curve to sperated meshes"
@@ -561,7 +561,7 @@ class YConvertCurveToSeparatedMesh(bpy.types.Operator):
         convert_curve_to_mesh(context, 'SEPARATE')
         return {'FINISHED'}
 
-class YConvertCurveToMergedMesh(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YConvertCurveToMergedMesh(bpy.types.Operator):
     bl_idname = "curve.y_convert_beveled_curve_to_merged_mesh"
     bl_label = "To Merged Mesh"
     bl_description = "Convert beveled curve to one merged mesh"
@@ -577,7 +577,7 @@ class YConvertCurveToMergedMesh(bpy.types.Operator):
         convert_curve_to_mesh(context, 'MERGE')
         return {'FINISHED'}
 
-class YConvertCurveToUnionMesh(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YConvertCurveToUnionMesh(bpy.types.Operator):
     bl_idname = "curve.y_convert_beveled_curve_to_union_mesh"
     bl_label = "To Union Mesh"
     bl_description = "Convert beveled curve to one union mesh"
@@ -593,7 +593,7 @@ class YConvertCurveToUnionMesh(bpy.types.Operator):
         convert_curve_to_mesh(context, 'UNION')
         return {'FINISHED'}
 
-class YConvertCurveToMesh(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YConvertCurveToMesh(bpy.types.Operator):
     bl_idname = "curve.y_convert_beveled_curve_to_meshes"
     bl_label = "To Mesh(es)"
     bl_description = "Convert beveled curve to meshes"
@@ -609,7 +609,7 @@ class YConvertCurveToMesh(bpy.types.Operator):
         convert_curve_to_mesh(context, 'NOMERGE')
         return {'FINISHED'}
 
-class YHideBevelObjects(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YHideBevelObjects(bpy.types.Operator):
     bl_idname = "curve.y_hide_bevel_objects"
     bl_label = "Hide Bevel Objects"
     bl_description = "Hide all bevel objects in the scene"
@@ -633,7 +633,7 @@ class YHideBevelObjects(bpy.types.Operator):
                 bevel_objs.append(obj.data.bevel_object)
             if '_bevel' in obj.name and  obj not in bevel_objs:
                 bevel_objs.append(obj)
-        
+
         if not is_greater_than_280():
             # Change object's layer to only layer 19
             for obj in bevel_objs:
@@ -644,10 +644,10 @@ class YHideBevelObjects(bpy.types.Operator):
         # Hide objects
         for obj in bevel_objs:
             hide_object(obj, True)
-        
+
         return {'FINISHED'}
 
-class YEditBevelCurve(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YEditBevelCurve(bpy.types.Operator):
     bl_idname = "curve.y_edit_bevel_curve"
     bl_label = "Edit Bevel"
     bl_description = "Edit bevel shape of curve"
@@ -679,6 +679,7 @@ class YEditBevelCurve(bpy.types.Operator):
                 col.objects.link(bevel_obj)
             else: link_object(scn, bevel_obj)
 
+
             curve.bevel_object = bevel_obj
 
         idx = get_proper_index_bevel_placement(obj)
@@ -708,30 +709,30 @@ class YEditBevelCurve(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class YAddBevelToCurve(bpy.types.Operator):
+class BEVELCURVETOOL_OT_YAddBevelToCurve(bpy.types.Operator):
     bl_idname = "curve.y_add_bevel_to_curve"
     bl_label = "Add/Override Bevel"
     bl_description = "Add or override bevel to curve object"
     bl_options = {'REGISTER', 'UNDO'}
 
-    shape = EnumProperty(
+    shape : EnumProperty(
             name = "Shape",
-            description="Use predefined shape of bevel", 
+            description="Use predefined shape of bevel",
             items=(
                 ('SQUARE', "Square", ""),
                 ('HALFCIRCLE', "Half-Circle", ""),
                 ('CIRCLE', "Circle", ""),
                 ('TRIANGLE', "Triangle", ""),
-                ), 
+                ),
             default='TRIANGLE',
             )
 
-    subsurf = BoolProperty(
+    subsurf : BoolProperty(
             name="Use SubSurf Modifier",
             default=False,
             )
 
-    scale_x = FloatProperty(
+    scale_x : FloatProperty(
             name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
@@ -740,7 +741,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_y = FloatProperty(
+    scale_y : FloatProperty(
             name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
@@ -749,7 +750,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             precision=3
             )
 
-    rotation = FloatProperty(
+    rotation : FloatProperty(
             name="Rotate",
             description="Tilt rotation",
             unit='ROTATION',
@@ -757,18 +758,18 @@ class YAddBevelToCurve(bpy.types.Operator):
             default=0.0,
             )
 
-    falloff = EnumProperty(
+    falloff : EnumProperty(
             name = "Radius Falloff",
-            description="Falloff of beveled curve", 
+            description="Falloff of beveled curve",
             items=(
                 ('DUALTIP', "Dual Tip", ""),
                 ('ONETIP', "One Tip", ""),
                 ('NOTIP', "No Tip", ""),
-                ), 
+                ),
             default='ONETIP',
             )
 
-    #falloff_power = FloatProperty(
+    #falloff_power : FloatProperty(
     #        name="Falloff Power",
     #        description="Power of the falloff",
     #        min=1.0, max=10.0,
@@ -816,8 +817,8 @@ class YAddBevelToCurve(bpy.types.Operator):
 
         if len(points) < 2:
             self.report({'ERROR'}, "Just one point wouldn't do it")
-            return {'CANCELLED'}  
-        
+            return {'CANCELLED'}
+
         if len(points) == 2 and self.falloff == 'DUALTIP':
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.curve.select_all(action='SELECT')
@@ -854,7 +855,7 @@ class YAddBevelToCurve(bpy.types.Operator):
 
             # Check if other object using this bevel object
             bevel_used = check_bevel_used_by_other_objects(curve_obj)
-            
+
             if not bevel_used:
                 if is_greater_than_280():
                     col = context.view_layer.layer_collection.children.get(HIDDEN_COLLECTION_NAME)
@@ -893,10 +894,10 @@ class YAddBevelToCurve(bpy.types.Operator):
                 (0.05, 0.05), (0.036, 0.014)]
 
         square_coords = [
-                (0.0, 0.04), (0.01, 0.05), 
-                (0.09, 0.05), (0.1, 0.04), 
+                (0.0, 0.04), (0.01, 0.05),
+                (0.09, 0.05), (0.1, 0.04),
                 (0.1, 0.0),
-                (0.1, -0.04), (0.09, -0.05), 
+                (0.1, -0.04), (0.09, -0.05),
                 (0.01, -0.05), (0.0, -0.04)]
 
         if self.shape == 'TRIANGLE':
@@ -928,9 +929,11 @@ class YAddBevelToCurve(bpy.types.Operator):
             link_object(scn, bevel_obj)
 
         # Add bevel to curve
+        if bpy.app.version >= (2,90,0):
+            curve.bevel_mode = 'OBJECT'
         curve.bevel_object = bevel_obj
         curve.use_fill_caps = True
-        
+
         # Scale the points
         #for spline in bevel_curve.splines:
         ps = get_spline_points(bevel_curve.splines[0])
@@ -944,19 +947,19 @@ class YAddBevelToCurve(bpy.types.Operator):
         offset_y = sum_y / len(ps)
 
         for p in ps:
-            # Offset to center the origins 
+            # Offset to center the origins
             p.co.x -= offset_x
             p.co.y -= offset_y
 
             # then scale
             p.co.x *= self.scale_x
             p.co.y *= self.scale_y
-            
+
         if self.falloff == 'DUALTIP':
             midindex = int((len(points)-1)/2)
             bevel_rotation = get_point_rotation(context, scn, curve_obj, index=midindex)
             bevel_position = get_point_position(curve_obj, index=midindex)
-        else: 
+        else:
             bevel_rotation = get_point_rotation(context, scn, curve_obj)
             bevel_position = get_point_position(curve_obj)
 
@@ -984,7 +987,7 @@ class YAddBevelToCurve(bpy.types.Operator):
         for m in modifiers:
             if m.type == 'SUBSURF':
                 subsurf_found = True
-        
+
         if self.subsurf == False:
             if subsurf_found == True:
                 for m in modifiers:
@@ -1000,31 +1003,31 @@ class YAddBevelToCurve(bpy.types.Operator):
 def register():
 
     if is_greater_than_280():
-        bpy.utils.register_class(YBevelCurveToolUIPanel)
-    else: bpy.utils.register_class(YBevelCurveToolPanel)
-    bpy.utils.register_class(YFinishEditBevel)
-    bpy.utils.register_class(YNewBeveledCurve)
-    bpy.utils.register_class(YConvertCurveToSeparatedMesh)
-    bpy.utils.register_class(YConvertCurveToMergedMesh)
-    bpy.utils.register_class(YConvertCurveToUnionMesh)
-    bpy.utils.register_class(YConvertCurveToMesh)
-    bpy.utils.register_class(YHideBevelObjects)
-    bpy.utils.register_class(YEditBevelCurve)
-    bpy.utils.register_class(YAddBevelToCurve)
+        bpy.utils.register_class(BEVELCURVETOOL_PT_YBevelCurveToolUIPanel)
+    else: bpy.utils.register_class(BEVELCURVETOOL_PT_YBevelCurveToolPanel)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YFinishEditBevel)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YNewBeveledCurve)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YConvertCurveToSeparatedMesh)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YConvertCurveToMergedMesh)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YConvertCurveToUnionMesh)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YConvertCurveToMesh)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YHideBevelObjects)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YEditBevelCurve)
+    bpy.utils.register_class(BEVELCURVETOOL_OT_YAddBevelToCurve)
 
 def unregister():
     if is_greater_than_280():
-        bpy.utils.unregister_class(YBevelCurveToolUIPanel)
-    else: bpy.utils.unregister_class(YBevelCurveToolPanel)
-    bpy.utils.unregister_class(YFinishEditBevel)
-    bpy.utils.unregister_class(YNewBeveledCurve)
-    bpy.utils.unregister_class(YConvertCurveToSeparatedMesh)
-    bpy.utils.unregister_class(YConvertCurveToMergedMesh)
-    bpy.utils.unregister_class(YConvertCurveToUnionMesh)
-    bpy.utils.unregister_class(YConvertCurveToMesh)
-    bpy.utils.unregister_class(YHideBevelObjects)
-    bpy.utils.unregister_class(YEditBevelCurve)
-    bpy.utils.unregister_class(YAddBevelToCurve)
+        bpy.utils.unregister_class(BEVELCURVETOOL_PT_YBevelCurveToolUIPanel)
+    else: bpy.utils.unregister_class(BEVELCURVETOOL_PT_YBevelCurveToolPanel)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YFinishEditBevel)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YNewBeveledCurve)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YConvertCurveToSeparatedMesh)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YConvertCurveToMergedMesh)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YConvertCurveToUnionMesh)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YConvertCurveToMesh)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YHideBevelObjects)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YEditBevelCurve)
+    bpy.utils.unregister_class(BEVELCURVETOOL_OT_YAddBevelToCurve)
 
 if __name__ == "__main__":
     register()

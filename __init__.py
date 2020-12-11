@@ -24,6 +24,12 @@ def is_greater_than_280():
         return True
     else: return False
 
+def is_greater_than_291():
+    ver = bpy.app.version_string[:4]
+    if versiontuple(ver) >= versiontuple('2.91'):
+        return True
+    else: return False
+
 def set_active_object(obj):
     if is_greater_than_280():
         bpy.context.view_layer.objects.active = obj
@@ -809,6 +815,10 @@ class YAddBevelToCurve(bpy.types.Operator):
         # Set resolution
         #curve.resolution_u = self.resolution
         #curve.render_resolution_u = self.resolution
+        
+        # Blender 2.91+ need bevel mode to be set to object
+        if is_greater_than_291():
+            curve.bevel_mode = 'OBJECT'
 
         # First spline
         splines = curve_obj.data.splines

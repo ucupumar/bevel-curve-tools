@@ -120,7 +120,7 @@ def bool_union(context):
         md.object = o       
 
         # Apply the modifier
-        bpy.ops.object.modifier_apply(apply_as='DATA', modifier="booleanunion")
+        bpy.ops.object.modifier_apply(modifier="booleanunion")
 
         # Delete current object
         bpy.ops.object.select_all(action='DESELECT')

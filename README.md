@@ -2,7 +2,7 @@
 Blender addons that helps you with creating and maintaining beveled curve.
 
 #### Compatibility
-This addon works on both Blender 2.79 and Blender 2.80.  
+This addon works on both Blender 2.79 and Blender 2.80+.  
 You should download 'blender_279' branch to use this addon on Blender 2.79
 
 #### Location

@@ -2,7 +2,7 @@ bl_info = {
     "name": "Bevel Curve Tools",
     "author": "Yusuf Umar",
     "version": (0, 9, 2),
-    "blender": (2, 80, 0),
+    "blender": (2, 79, 0),
     "location": "View 3D > Tool Shelf > Curve",
     "description": "Tool to help add and maintain beveled curve easier",
     "wiki_url": "https://github.com/ucupumar/bevel-curve-tools",
@@ -459,7 +459,7 @@ class YNewBeveledCurve(bpy.types.Operator):
     bl_description = "Create new beveled curve"
     bl_options = {'REGISTER', 'UNDO'}
 
-    curve_type : EnumProperty(
+    curve_type = EnumProperty(
             name = 'Type',
             description="Curve Type", 
             items = (
@@ -469,7 +469,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             default='BEZIER',
             )
 
-    shape : EnumProperty(
+    shape = EnumProperty(
             name = "Shape",
             description="Use predefined shape of bevel", 
             items=(
@@ -481,12 +481,12 @@ class YNewBeveledCurve(bpy.types.Operator):
             default='TRIANGLE',
             )
 
-    subsurf : BoolProperty(
+    subsurf = BoolProperty(
             name="Use SubSurf Modifier",
             default=False,
             )
 
-    radius : FloatProperty(
+    radius = FloatProperty(
             name="Size (Curve)",
             description="Size of the curve",
             min=0.1, max=10.0,
@@ -495,7 +495,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_x : FloatProperty(
+    scale_x = FloatProperty(
             name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
@@ -504,7 +504,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_y : FloatProperty(
+    scale_y = FloatProperty(
             name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
@@ -513,7 +513,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             precision=3
             )
 
-    rotation : FloatProperty(
+    rotation = FloatProperty(
             name="Rotate",
             description="Tilt rotation",
             unit='ROTATION',
@@ -521,7 +521,7 @@ class YNewBeveledCurve(bpy.types.Operator):
             default=0.0,
             )
 
-    falloff : EnumProperty(
+    falloff = EnumProperty(
             name = "Radius Falloff",
             description="Falloff of beveled curve", 
             items=(
@@ -720,7 +720,7 @@ class YAddBevelToCurve(bpy.types.Operator):
     bl_description = "Add or override bevel to curve object"
     bl_options = {'REGISTER', 'UNDO'}
 
-    shape : EnumProperty(
+    shape = EnumProperty(
             name = "Shape",
             description="Use predefined shape of bevel", 
             items=(
@@ -732,12 +732,12 @@ class YAddBevelToCurve(bpy.types.Operator):
             default='TRIANGLE',
             )
 
-    subsurf : BoolProperty(
+    subsurf = BoolProperty(
             name="Use SubSurf Modifier",
             default=False,
             )
 
-    scale_x : FloatProperty(
+    scale_x = FloatProperty(
             name="Scale X (Bevel Object)",
             description="X scaling",
             min=0.1, max=10.0,
@@ -746,7 +746,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             precision=3
             )
 
-    scale_y : FloatProperty(
+    scale_y = FloatProperty(
             name="Scale Y (Bevel Object)",
             description="Y scaling",
             min=0.1, max=10.0,
@@ -755,7 +755,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             precision=3
             )
 
-    rotation : FloatProperty(
+    rotation = FloatProperty(
             name="Rotate",
             description="Tilt rotation",
             unit='ROTATION',
@@ -763,7 +763,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             default=0.0,
             )
 
-    falloff : EnumProperty(
+    falloff = EnumProperty(
             name = "Radius Falloff",
             description="Falloff of beveled curve", 
             items=(
@@ -774,7 +774,7 @@ class YAddBevelToCurve(bpy.types.Operator):
             default='ONETIP',
             )
 
-    #falloff_power : FloatProperty(
+    #falloff_power = FloatProperty(
     #        name="Falloff Power",
     #        description="Power of the falloff",
     #        min=1.0, max=10.0,
@@ -783,7 +783,7 @@ class YAddBevelToCurve(bpy.types.Operator):
     #        precision=2
     #        )
 
-    #resolution : IntProperty(
+    #resolution = IntProperty(
     #        name="Resolution U",
     #        description="Resolution between points",
     #        min=1, max=64,

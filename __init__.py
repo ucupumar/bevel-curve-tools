@@ -15,27 +15,15 @@ from bpy.props import FloatProperty, BoolProperty, IntProperty, EnumProperty
 
 HIDDEN_COLLECTION_NAME = '_HIDDEN_BEVEL_OBJECTS'
 
-def get_app_version_string():
-    ver = bpy.app.version_string[:4]
-    # Blender 3.0+ has only 3 important digits
-    if ver.endswith('.'):
-        return ver[:3]
-    return ver
-
-def versiontuple(v):
-    return tuple(map(int, (v.split("."))))
-
 def is_greater_than_280():
-    ver = get_app_version_string()
-    if versiontuple(ver) >= versiontuple('2.80'):
+    if bpy.app.version >= (2, 80, 0):
         return True
-    else: return False
+    return False
 
 def is_greater_than_291():
-    ver = get_app_version_string()
-    if versiontuple(ver) >= versiontuple('2.91'):
+    if bpy.app.version >= (2, 91, 0):
         return True
-    else: return False
+    return False
 
 def set_active_object(obj):
     if is_greater_than_280():
